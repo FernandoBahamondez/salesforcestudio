@@ -1,4 +1,4 @@
---- 
+---
 title: "Salesforce | Ingeniería Inversa"
 author: "Fernando Bahamóndez"
 date: "`r Sys.Date()`"
@@ -15,74 +15,42 @@ link-citations: yes
 github-repo: rstudio/bookdown-demo
 ---
 
-# Bienvenid@!
+# Bienvenid\@! {.unnumbered}
 
-Esta es una iniciativa en donde es una investigación y análisis de como funciona la plataforma **Salesforce**.
-Esta versión se ha comenzado el 17-04-2026. 
+Esta es una iniciativa de investigación y análisis de como funciona la plataforma **Salesforce**. Esta versión se ha comenzado el 17-04-2026.
 
 El objetivo es tratar de explicar en simple lo que es Salesforce, y animar a que más profesionales aprendan y practiquen con casos reales como funciona la plataforma.
 
-## ¿ Que es Salesforce?
+## Contexto de Salesforce
 
-Es una solución Saas (Software as a Service) para que instituciones o empresas, puedan gestionar la Venta y Postventa de los clientes en una plataforma centralizada.
+Salesforce es una solución Saas (Software as a Service) para que instituciones o empresas, puedan gestionar la Venta y Postventa de los clientes en una plataforma centralizada.
 
+En el contexto latinoamericano, cada vez mas instituciones están incorporando la plataforma a las empresas en donde se está requiriendo cada vez más profesionales dedicados a administrar la plataforma.
 
--> Aquí incorporar el dibujo general de una ciudad con edificios que utilizan Salesforce.
+## ¿ Qué es Salesforce ?
 
+Si no te ha tocado trabajar con la plataforma, uno ingresa a una página web con usuario y contraseña, y verás algo similar a lo siguiente:
 
+\
+\
+[![https://www.salesforce.com/products/what-is-salesforce/](images/clipboard-3730263570.png "jklkjjkl")](https://www.salesforce.com/products/what-is-salesforce/)
 
-![Arquitectura Salesforce](images/dar_version_arq.png)
+La manera que explicaremos Salesforce se muestra en el siguiente diagrama:
 
 
 ```{r echo=FALSE, fig.cap="Diagrama de arquitectura de Salesforce", out.width="100%"}
-knitr::include_graphics("images/dar_version_arq.png")
+knitr::include_graphics("images/Diagrama_Base.png")
 ```
 
+Lo anterior hace referencia que Salesforce , está conformado por diferentes capas para que funcione y el usuario final pueda navegar en los flujos guiados y gestionar el Pipeline de Negocio.
+
+En los siguientes capítulos se irá trabajando capa por capa para poder entender como funciona y poder generar conocimiento y aplicarlo a los contextos de negocio.
 
 
-## Setup
-
-R
-Github
-Salesforce
-
-Each **bookdown** chapter is an .Rmd file, and each .Rmd file can contain one (and only one) chapter. A chapter *must* start with a first-level heading: `# A good chapter`, and can contain one (and only one) first-level heading.
-
-Use second-level and higher headings within chapters like: `## A short section` or `### An even shorter section`.
-
-The `index.Rmd` file is required, and is also your first book chapter. It will be the homepage when you render the book.
-
-## Render book
-
-![](images/ESTADO_DEL_ARTE.svg){width="900"}
-
-```{r echo=FALSE, fig.cap="Diagrama de arquitectura de Salesforce", out.width="100%"}
-knitr::include_graphics("images/ESTADO_DEL_ARTE.svg")
-```
-
-
-You can render the HTML version of this example book without changing anything:
-
-1. Find the **Build** pane in the RStudio IDE, and
-
-1. Click on **Build Book**, then select your output format, or select "All formats" if you'd like to use multiple formats from the same book source files.
-
-Or build the book from the R console:
-
-```{r, eval=FALSE}
-bookdown::render_book()
-```
-
-To render this example to PDF as a `bookdown::pdf_book`, you'll need to install XeLaTeX. You are recommended to install TinyTeX (which includes XeLaTeX): <https://yihui.org/tinytex/>.
-
-## Preview book
-
-As you work, you may start a local server to live preview this HTML book. This preview will update as you edit the book when you save individual .Rmd files. You can start the server in a work session by using the RStudio add-in "Preview book", or from the R console:
 
 ```{r eval=FALSE}
 bookdown::serve_book()
 ```
-
 
 ```{r include=FALSE}
 # automatically create a bib database for R packages
