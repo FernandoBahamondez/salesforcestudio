@@ -1,0 +1,17 @@
+# Admin Certification
+
+Practica:
+
+```{r}
+library(webexercises)
+```
+
+
+Evaluación de Conocimientos
+1. Pregunta de alternativa única (Solo 1 correcta)
+¿Cuál es la función principal en R para ver la estructura de un objeto?
+
+```{r}
+mcq(c("summary()", "plot()", answer = "str()", "head()"))
+```
+

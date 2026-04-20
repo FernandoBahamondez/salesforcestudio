@@ -40,3 +40,7 @@ integración
 op-1
 fig:nice-fig
 tab:nice-tab
+admin-certification
+eq:binom
+thm:tri
+user-token
