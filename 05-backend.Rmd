@@ -2,7 +2,7 @@
 
 ## lwc
 
-```{r}
+```{r eval=FALSE}
 retrieve_request <- list(
   unpackaged = list(
     # Primer bloque de tipos
@@ -40,7 +40,4 @@ unzip(
 ```
 
 
-```{powershell}
-# Busca un término en todos los archivos y subcarpetas
-Select-String -Path ".\codigofuente\*" -Pattern "contact" -Recurse
-```
+
