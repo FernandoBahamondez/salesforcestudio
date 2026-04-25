@@ -9,18 +9,53 @@ output: html_document
 ## R
 
 
+
+
 ### library(salesforcer)
 
-```{r}
 
+
+```{r post_new_library, eval=FALSE}
+renv::snapshot()
 ```
 
 
 ## Git
 
-```{r git}
+
+
+
+```{r bash, eval=FALSE}
+# Chunk para automatizar subidas a GitHub
 git add .
 git commit -m "test desde r"
 git push origin main
 ```
 
+### Opción 2: Usar un chunk de R con la función `system()`
+
+Si prefieres mantenerte dentro de un entorno R, puedes usar la función nativa `system()` para enviar comandos a la consola subyacente.
+
+1. Crea un chunk normal de R.
+2. Pasa los comandos como cadenas de texto dentro de la función `system()`. 
+3. Para ejecutar múltiples comandos secuencialmente, puedes unirlos con `&&` (que significa: ejecuta el siguiente comando solo si el anterior fue exitoso).
+
+Se vería así:
+
+
+
+```{r , eval=FALSE}
+
+# Ejecutar comandos de git usando system()
+system('git add . && git commit -m "test desde r" && git push origin main')
+
+
+```
+
+### ⚠️ Consideración importante sobre la autenticación
+
+Para que el comando `git push origin main` funcione correctamente desde un chunk (ya sea bash o R), **tu conexión con GitHub debe estar autenticada de forma automática**. 
+
+Si GitHub te suele pedir tu usuario y contraseña (o Token) cada vez que haces un `push` en la consola normal, el chunk se quedará "colgado" esperando esa información en segundo plano y no terminará de ejecutarse. 
+
+Para que esto sea fluido, asegúrate de tener configurado un **Personal Access Token (PAT)*
