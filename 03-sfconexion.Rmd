@@ -117,17 +117,15 @@ head(sf_metadata)
 library(DT)
 # Leemos el archivo procesado localmente
 df_render <- readRDS("data/sf_metadata_describe.rds")
-
-
 ```
 
-```{r eval=TRUE}
+```{r data_metadatos,eval=TRUE}
 # Mostramos toda la tabla de forma interactiva (10 filas por página, con filtros)
 datatable(df_render, 
           rownames = FALSE, 
           filter = 'top', 
           options = list(
-            pageLength = 10, 
+            pageLength = 5, 
             autoWidth = TRUE,
             scrollX = TRUE
           ),
@@ -136,8 +134,6 @@ datatable(df_render,
 
 que significa que un xmlName tenga childXmlNames?
 | childXmlNames | string[] | List of child sub-components for this component. |
-
-
 
 ## ApexClass
 
@@ -306,10 +302,12 @@ json_codigos,
 HTML(html_completo)
 ```
 
-
 ## lwc
 
-1. Primero cargue los Recipe de LWC de salesforce a la playground.
+1. Primero se realizó una carga de los Recipe de LWC de salesforce a la playgroun:
+fuente: https://github.com/trailheadapps/lwc-recipes
+
+En donde abordaremos que ocurre en la instalación de estos componentes:
 
 ```{r descargar_lwc, eval=FALSE}
 ### LightningComponentBundle
@@ -329,7 +327,6 @@ metada_list_LightningComponentBundle <- sf_list_metadata(
 saveRDS(metada_list_LightningComponentBundle, "data/sf_metadata_lwc.rds")
 ```
 
-
 ```{r mostrar_lwc}
 library(DT)
 
@@ -346,6 +343,337 @@ datatable(df_lwc,
             scrollX = TRUE
           ),
           caption = "Listado de Lightning Component Bundles (LWC)")
+```
+
+
+
+```{r visor-vscode-lwc, echo=FALSE, warning=FALSE, message=FALSE}
+library(htmltools)
+library(jsonlite)
+
+# 1. Definir la ruta a los componentes LWC
+ruta_lwc <- "codigofuente/unpackaged/lwc"
+
+# 2. Obtener todas las carpetas (cada carpeta es un componente LWC)
+componentes <- list.dirs(ruta_lwc, full.names = TRUE, recursive = FALSE)
+nombres_componentes <- basename(componentes)
+
+# 3. Leer la estructura completa y empaquetarla en una lista anidada de R
+datos_lwc <- list()
+
+for (comp_path in componentes) {
+  comp_name <- basename(comp_path)
+  archivos_completos <- list.files(comp_path, full.names = TRUE, recursive = TRUE)
+  archivos_relativos <- list.files(comp_path, full.names = FALSE, recursive = TRUE)
+  
+  archivos_datos <- list()
+  if (length(archivos_completos) > 0) {
+    for (i in seq_along(archivos_completos)) {
+      contenido <- paste(readLines(archivos_completos[i], warn = FALSE), collapse = "\n")
+      archivos_datos[[archivos_relativos[i]]] <- contenido
+    }
+  }
+  datos_lwc[[comp_name]] <- archivos_datos
+}
+
+# 4. Convertir a JSON de forma segura
+json_codigos_lwc <- as.character(toJSON(datos_lwc, auto_unbox = TRUE))
+
+# 5. Construir las opciones del primer picklist (Componentes)
+opciones_componentes <- paste0(
+  "<option value='", nombres_componentes, "'>📁 ", nombres_componentes, "</option>",
+  collapse = "\n"
+)
+
+# 6. Estructura HTML final con doble picklist
+html_completo <- paste0('
+<div style="display: flex; height: 550px; border: 1px solid #333; border-radius: 6px; overflow: hidden; font-family: sans-serif; box-shadow: 0 4px 8px rgba(0,0,0,0.2); margin-top: 20px;">
+
+  <div style="width: 30%; min-width: 260px; background-color: #252526; border-right: 1px solid #1e1e1e; display: flex; flex-direction: column;">
+    <div style="padding: 12px 15px; color: #cccccc; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; background-color: #2d2d2d;">
+      Explorador LWC
+    </div>
+    
+    <div style="padding: 15px; border-bottom: 1px solid #333; flex: 1; background-color: #252526;">
+      
+      <label style="color: #858585; font-size: 11px; text-transform: uppercase; margin-bottom: 5px; display: block;">1. Selecciona el LWC</label>
+      <select id="select-componente-lwc" style="width: 100%; box-sizing: border-box; padding: 8px; background-color: #3c3c3c; color: #ccc; border: 1px solid #555; border-radius: 3px; outline: none; font-size: 13px; margin-bottom: 20px; font-family: inherit;" onchange="cargarArchivosLWC()">
+        <option value="">-- Componente --</option>\n',
+        opciones_componentes,
+'     </select>
+
+      <label style="color: #858585; font-size: 11px; text-transform: uppercase; margin-bottom: 5px; display: block;">2. Selecciona el Archivo</label>
+      <select id="select-archivo-lwc" style="width: 100%; box-sizing: border-box; padding: 8px; background-color: #3c3c3c; color: #ccc; border: 1px solid #555; border-radius: 3px; outline: none; font-size: 13px; font-family: inherit;" onchange="mostrarCodigoLWC()">
+        <option value="">-- Esperando componente... --</option>
+      </select>
+      
+    </div>
+  </div>
+
+  <div style="flex: 1; background-color: #1e1e1e; display: flex; flex-direction: column; overflow: hidden;">
+    <div style="padding: 10px 15px; background-color: #2d2d2d; color: #858585; font-size: 13px; border-bottom: 1px solid #1e1e1e;">
+      <span id="titulo-archivo-lwc" style="font-family: Consolas, monospace;">lwc / ...</span>
+    </div>
+    
+    <div id="visor-codigo-lwc" style="flex: 1; overflow: auto; padding: 15px 0; background-color: #1e1e1e; font-family: Consolas, monospace; font-size: 13px;">
+      <div style="display: flex; line-height: 1.5;">
+        <div style="min-width: 40px; text-align: right; padding-right: 15px; color: #6e7681; user-select: none; border-right: 1px solid #404040; margin-right: 15px;">1</div>
+        <div style="white-space: pre; color: #d4d4d4;">/* Selecciona un componente y luego un archivo en el panel izquierdo. */</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script type="application/json" id="json-datos-lwc">\n',
+json_codigos_lwc,
+'\n</script>
+
+<script>
+  var datosGlobalesLWC = {};
+  try {
+    var rawData = document.getElementById("json-datos-lwc").textContent;
+    datosGlobalesLWC = JSON.parse(rawData);
+  } catch(e) {
+    console.error("Error al procesar el código LWC: ", e);
+  }
+
+  // Se ejecuta al cambiar el Picklist 1 (Componente)
+  function cargarArchivosLWC() {
+    var componenteSel = document.getElementById("select-componente-lwc").value;
+    var selectArchivo = document.getElementById("select-archivo-lwc");
+    var visor = document.getElementById("visor-codigo-lwc");
+    var titulo = document.getElementById("titulo-archivo-lwc");
+    
+    // Limpiar picklist secundario
+    selectArchivo.innerHTML = "<option value=\'\'>-- Selecciona un archivo --</option>";
+    
+    if (componenteSel && datosGlobalesLWC[componenteSel]) {
+      var archivos = Object.keys(datosGlobalesLWC[componenteSel]);
+      for (var i = 0; i < archivos.length; i++) {
+        // Iconos actualizados con diseño más técnico
+        var icono = "📄 ";
+        if(archivos[i].endsWith(".html")) icono = "🌐 ";
+        if(archivos[i].endsWith(".js")) icono = "💻 ";
+        if(archivos[i].endsWith(".css")) icono = "🎨 ";
+        if(archivos[i].endsWith(".xml")) icono = "⚙️ ";
+        
+        selectArchivo.innerHTML += "<option value=\'" + archivos[i] + "\'>" + icono + archivos[i] + "</option>";
+      }
+      titulo.innerHTML = "<span style=\'color: #4a90e2;\'>lwc / </span><span style=\'color: #cccccc;\'>" + componenteSel + "</span>";
+    } else {
+      selectArchivo.innerHTML = "<option value=\'\'>-- Esperando componente... --</option>";
+      titulo.innerHTML = "lwc / ...";
+    }
+    
+    // Resetear visor
+    visor.innerHTML = "<div style=\'display: flex; line-height: 1.5;\'><div style=\'min-width: 40px; text-align: right; padding-right: 15px; color: #6e7681; user-select: none; border-right: 1px solid #404040; margin-right: 15px;\'>1</div><div style=\'white-space: pre; color: #d4d4d4;\'>/* Selecciona un archivo del menú superior. */</div></div>";
+  }
+
+  // Se ejecuta al cambiar el Picklist 2 (Archivo)
+  function mostrarCodigoLWC() {
+    var componenteSel = document.getElementById("select-componente-lwc").value;
+    var archivoSel = document.getElementById("select-archivo-lwc").value;
+    var visor = document.getElementById("visor-codigo-lwc");
+    var titulo = document.getElementById("titulo-archivo-lwc");
+    
+    if (componenteSel && archivoSel && datosGlobalesLWC[componenteSel][archivoSel]) {
+      var textoCodigo = datosGlobalesLWC[componenteSel][archivoSel];
+      
+      // Actualizar Breadcrumb
+      titulo.innerHTML = "<span style=\'color: #4a90e2;\'>lwc / </span><span style=\'color: #cccccc;\'>" + componenteSel + "</span><span style=\'color: #4a90e2;\'> / </span><span style=\'color: #ffffff;\'>" + archivoSel + "</span>";
+      
+      // Renderizar líneas
+      var lineas = textoCodigo.split(/\\r?\\n/);
+      var htmlFinal = "";
+      
+      for(var i = 0; i < lineas.length; i++) {
+        var lineaLimpia = lineas[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        if (lineaLimpia === "") lineaLimpia = " "; 
+        
+        htmlFinal += "<div style=\'display: flex; line-height: 1.5;\'>" +
+                       "<div style=\'min-width: 40px; text-align: right; padding-right: 15px; color: #6e7681; user-select: none; border-right: 1px solid #404040; margin-right: 15px;\'>" + (i + 1) + "</div>" +
+                       "<div style=\'white-space: pre; color: #d4d4d4;\'>" + lineaLimpia + "</div>" +
+                     "</div>";
+      }
+      visor.innerHTML = htmlFinal;
+    }
+  }
+</script>
+')
+
+# Renderizar
+HTML(html_completo)
 
 ```
+
+
+
+## Aura:
+
+
+```{r visor-vscode-aura, echo=FALSE, warning=FALSE, message=FALSE}
+library(htmltools)
+library(jsonlite)
+
+# 1. Definir la ruta a los componentes Aura
+ruta_aura <- "codigofuente/unpackaged/aura"
+
+# 2. Obtener todas las carpetas (cada carpeta es un componente Aura)
+componentes_aura <- list.dirs(ruta_aura, full.names = TRUE, recursive = FALSE)
+nombres_componentes_aura <- basename(componentes_aura)
+
+# 3. Leer la estructura completa y empaquetarla en una lista anidada
+datos_aura <- list()
+
+for (comp_path in componentes_aura) {
+  comp_name <- basename(comp_path)
+  archivos_completos <- list.files(comp_path, full.names = TRUE, recursive = TRUE)
+  archivos_relativos <- list.files(comp_path, full.names = FALSE, recursive = TRUE)
+  
+  archivos_datos <- list()
+  if (length(archivos_completos) > 0) {
+    for (i in seq_along(archivos_completos)) {
+      contenido <- paste(readLines(archivos_completos[i], warn = FALSE), collapse = "\n")
+      archivos_datos[[archivos_relativos[i]]] <- contenido
+    }
+  }
+  datos_aura[[comp_name]] <- archivos_datos
+}
+
+# 4. Convertir a JSON de forma segura
+json_codigos_aura <- as.character(toJSON(datos_aura, auto_unbox = TRUE))
+
+# 5. Construir las opciones del Picklist 1 (Componentes)
+opciones_componentes_aura <- paste0(
+  "<option value='", nombres_componentes_aura, "'>📁 ", nombres_componentes_aura, "</option>",
+  collapse = "\n"
+)
+
+# 6. Estructura HTML final con el DOBLE PICKLIST para Aura
+html_completo_aura <- paste0('
+<div style="display: flex; height: 550px; border: 1px solid #333; border-radius: 6px; overflow: hidden; font-family: sans-serif; box-shadow: 0 4px 8px rgba(0,0,0,0.2); margin-top: 20px;">
+
+  <div style="width: 30%; min-width: 260px; background-color: #252526; border-right: 1px solid #1e1e1e; display: flex; flex-direction: column;">
+    <div style="padding: 12px 15px; color: #cccccc; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; background-color: #2d2d2d;">
+      Explorador Aura
+    </div>
+    
+    <div style="padding: 15px; border-bottom: 1px solid #333; flex: 1; background-color: #252526;">
+      
+      <label style="color: #858585; font-size: 11px; text-transform: uppercase; margin-bottom: 5px; display: block;">1. Selecciona el Aura</label>
+      <select id="select-componente-aura" style="width: 100%; box-sizing: border-box; padding: 8px; background-color: #3c3c3c; color: #ccc; border: 1px solid #555; border-radius: 3px; outline: none; font-size: 13px; margin-bottom: 20px; font-family: inherit;" onchange="cargarArchivosAura()">
+        <option value="">-- Componente --</option>\n',
+        opciones_componentes_aura,
+'     </select>
+
+      <label style="color: #858585; font-size: 11px; text-transform: uppercase; margin-bottom: 5px; display: block;">2. Selecciona el Archivo</label>
+      <select id="select-archivo-aura" style="width: 100%; box-sizing: border-box; padding: 8px; background-color: #3c3c3c; color: #ccc; border: 1px solid #555; border-radius: 3px; outline: none; font-size: 13px; font-family: inherit;" onchange="mostrarCodigoAura()">
+        <option value="">-- Esperando componente... --</option>
+      </select>
+      
+    </div>
+  </div>
+
+  <div style="flex: 1; background-color: #1e1e1e; display: flex; flex-direction: column; overflow: hidden;">
+    <div style="padding: 10px 15px; background-color: #2d2d2d; color: #858585; font-size: 13px; border-bottom: 1px solid #1e1e1e;">
+      <span id="titulo-archivo-aura" style="font-family: Consolas, monospace;">aura / ...</span>
+    </div>
+    
+    <div id="visor-codigo-aura" style="flex: 1; overflow: auto; padding: 15px 0; background-color: #1e1e1e; font-family: Consolas, monospace; font-size: 13px;">
+      <div style="display: flex; line-height: 1.5;">
+        <div style="min-width: 40px; text-align: right; padding-right: 15px; color: #6e7681; user-select: none; border-right: 1px solid #404040; margin-right: 15px;">1</div>
+        <div style="white-space: pre; color: #d4d4d4;">/* Selecciona un componente y luego un archivo en el panel izquierdo. */</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script type="application/json" id="json-datos-aura">\n',
+json_codigos_aura,
+'\n</script>
+
+<script>
+  var datosGlobalesAura = {};
+  try {
+    var rawData = document.getElementById("json-datos-aura").textContent;
+    datosGlobalesAura = JSON.parse(rawData);
+  } catch(e) {
+    console.error("Error al procesar el código Aura: ", e);
+  }
+
+  // Se ejecuta al cambiar el Picklist 1 (Componente)
+  function cargarArchivosAura() {
+    var componenteSel = document.getElementById("select-componente-aura").value;
+    var selectArchivo = document.getElementById("select-archivo-aura");
+    var visor = document.getElementById("visor-codigo-aura");
+    var titulo = document.getElementById("titulo-archivo-aura");
+    
+    // Limpiar picklist secundario
+    selectArchivo.innerHTML = "<option value=\'\'>-- Selecciona un archivo --</option>";
+    
+    if (componenteSel && datosGlobalesAura[componenteSel]) {
+      // Llenar picklist secundario con los archivos de ese componente
+      var archivos = Object.keys(datosGlobalesAura[componenteSel]);
+      for (var i = 0; i < archivos.length; i++) {
+        var arch = archivos[i];
+        var icono = "📄 ";
+        
+        // Emojis básicos soportados por la etiqueta <select>
+        if(arch.endsWith(".cmp") || arch.endsWith(".app") || arch.endsWith(".evt") || arch.endsWith(".intf")) icono = "💻 ";
+        if(arch.endsWith(".js")) icono = "💻 ";
+        if(arch.endsWith(".css")) icono = "🎨 ";
+        if(arch.endsWith(".xml")) icono = "⚙️ ";
+        if(arch.endsWith(".tokens") || arch.endsWith(".design")) icono = "🛠️ ";
+        
+        selectArchivo.innerHTML += "<option value=\'" + arch + "\'>" + icono + arch + "</option>";
+      }
+      titulo.innerHTML = "<span style=\'color: #4a90e2;\'>aura / </span><span style=\'color: #cccccc;\'>" + componenteSel + "</span>";
+    } else {
+      selectArchivo.innerHTML = "<option value=\'\'>-- Esperando componente... --</option>";
+      titulo.innerHTML = "aura / ...";
+    }
+    
+    // Resetear visor
+    visor.innerHTML = "<div style=\'display: flex; line-height: 1.5;\'><div style=\'min-width: 40px; text-align: right; padding-right: 15px; color: #6e7681; user-select: none; border-right: 1px solid #404040; margin-right: 15px;\'>1</div><div style=\'white-space: pre; color: #d4d4d4;\'>/* Selecciona un archivo del menú superior. */</div></div>";
+  }
+
+  // Se ejecuta al cambiar el Picklist 2 (Archivo)
+  function mostrarCodigoAura() {
+    var componenteSel = document.getElementById("select-componente-aura").value;
+    var archivoSel = document.getElementById("select-archivo-aura").value;
+    var visor = document.getElementById("visor-codigo-aura");
+    var titulo = document.getElementById("titulo-archivo-aura");
+    
+    if (componenteSel && archivoSel && datosGlobalesAura[componenteSel][archivoSel]) {
+      var textoCodigo = datosGlobalesAura[componenteSel][archivoSel];
+      
+      // Actualizar Breadcrumb
+      titulo.innerHTML = "<span style=\'color: #4a90e2;\'>aura / </span><span style=\'color: #cccccc;\'>" + componenteSel + "</span><span style=\'color: #4a90e2;\'> / </span><span style=\'color: #ffffff;\'>" + archivoSel + "</span>";
+      
+      // Renderizar líneas
+      var lineas = textoCodigo.split(/\\r?\\n/);
+      var htmlFinal = "";
+      
+      for(var i = 0; i < lineas.length; i++) {
+        var lineaLimpia = lineas[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        if (lineaLimpia === "") lineaLimpia = " "; 
+        
+        htmlFinal += "<div style=\'display: flex; line-height: 1.5;\'>" +
+                       "<div style=\'min-width: 40px; text-align: right; padding-right: 15px; color: #6e7681; user-select: none; border-right: 1px solid #404040; margin-right: 15px;\'>" + (i + 1) + "</div>" +
+                       "<div style=\'white-space: pre; color: #d4d4d4;\'>" + lineaLimpia + "</div>" +
+                     "</div>";
+      }
+      visor.innerHTML = htmlFinal;
+    }
+  }
+</script>
+')
+
+# Renderizar
+HTML(html_completo_aura)
+```
+
+
 

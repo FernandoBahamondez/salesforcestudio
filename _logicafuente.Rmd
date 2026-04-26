@@ -2,7 +2,20 @@
 title: "logica_fuente"
 output: html_document
 ---
+# proyecto
 
+Cuales son las carpetas y subarchivos del directorio:
+
+```{r eval=FALSE}
+fs::dir_tree()
+arbol_texto <- capture.output(fs::dir_tree())
+writeLines(arbol_texto, "estructura_proyecto.txt")
+```
+
+
+```{r eval=FALSE}
+list.files(recursive = TRUE)
+```
 
 # Salesforce
 
@@ -31,16 +44,12 @@ renv::rebuild()
 renv::snapshot()
 ```
 
-
 ## Git
 
-
-
-
-```{r bash, eval=FALSE}
+```{r bash, eval=FALSE, engine='bash'}
 # Chunk para automatizar subidas a GitHub
 git add .
-git commit -m "test desde r"
+git commit -m "Visor de codigo ApexClass"
 git push origin main
 ```
 
